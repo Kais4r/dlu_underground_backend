@@ -2,6 +2,8 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import mongoose from "mongoose";
 
+import homepage from "./routes/homepage";
+
 const app = new Hono();
 
 // Use CORS middleware
@@ -32,4 +34,9 @@ app.get("/", (c) => {
   return c.text("Hello! Welcome to DLU underground");
 });
 
-export default app;
+app.route("/homepage", homepage);
+
+export default {
+  port: 3000,
+  fetch: app.fetch,
+};

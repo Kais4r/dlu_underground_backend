@@ -2,7 +2,8 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import mongoose from "mongoose";
 
-import homepage from "./routes/homepage";
+import homepageRoutes from "./routes/homepageRoutes";
+import userRoutes from "./routes/userRoutes";
 
 const app = new Hono();
 
@@ -34,9 +35,10 @@ app.get("/", (c) => {
   return c.text("Hello! Welcome to DLU underground");
 });
 
-app.route("/homepage", homepage);
+app.route("/homepage", homepageRoutes);
+app.route("/user", userRoutes);
 
 export default {
-  port: 3000,
+  port: 3001,
   fetch: app.fetch,
 };

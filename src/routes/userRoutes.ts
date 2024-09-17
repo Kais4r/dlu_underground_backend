@@ -72,8 +72,10 @@ app.post("/login", async (c) => {
       {
         message: "Login successful",
         user: {
+          _id: user._id,
           name: user.name,
           email: user.email,
+          dluCoin: user.dluCoin,
         },
         token,
       },
@@ -84,5 +86,37 @@ app.post("/login", async (c) => {
   }
 });
 //app.get("/login", (c) => c.json("Dang nhap"));
+
+app.get("/get/:id", async (c) => {
+  try {
+    const userId = c.req.param("id"); // Access the route parameter correctly
+
+    if (!userId) {
+      return c.json({ success: false, message: "User ID is required" }, 400);
+    }
+
+    const user = await User.findById(userId).select("-password"); // Exclude password from the response
+
+    if (!user) {
+      return c.json({ success: false, message: "User not found" }, 404);
+    }
+
+    return c.json({ success: true, user });
+  } catch (error) {
+    console.error(error);
+
+    if (error instanceof Error) {
+      return c.json(
+        { success: false, message: "An error occurred", error: error.message },
+        500
+      );
+    }
+
+    return c.json(
+      { success: false, message: "An unknown error occurred" },
+      500
+    );
+  }
+});
 
 export default app;

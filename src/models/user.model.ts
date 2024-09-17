@@ -18,6 +18,10 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: "user",
   },
+  dluCoin: {
+    type: Number,
+    default: 0,
+  },
 });
 
 const User = mongoose.model("User", userSchema);

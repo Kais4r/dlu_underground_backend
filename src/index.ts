@@ -4,6 +4,9 @@ import mongoose from "mongoose";
 
 import homepageRoutes from "./routes/homepageRoutes";
 import userRoutes from "./routes/userRoutes";
+import productRoutes from "./routes/productRoutes";
+import orderRoutes from "./routes/orderRoutes";
+import buyerCardRoutes from "./routes/buyerCartRoutes";
 
 const app = new Hono();
 
@@ -37,6 +40,9 @@ app.get("/", (c) => {
 
 app.route("/homepage", homepageRoutes);
 app.route("/user", userRoutes);
+app.route("/product", productRoutes);
+app.route("/order", orderRoutes);
+app.route("/buyerCart", buyerCardRoutes);
 
 export default {
   port: 3001,

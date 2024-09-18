@@ -1,12 +1,15 @@
 import { Hono } from "hono";
 import Order from "../models/order.model"; // Assuming your order schema is in this path
 import User from "../models/user.model";
+import Shop from "../models/shop.model";
+import Product from "../models/product.model"; // Update the path as necessary
 
 const app = new Hono();
 
 type Product = {
   productID: string;
   name: string;
+  brand: string;
   quantity: number;
   price: number;
 };
@@ -40,7 +43,7 @@ app.post("/add", async (c) => {
       discount,
     }: {
       customerID: string;
-      products: Product[];
+      products: { productID: string; quantity: number; price: number }[];
       paymentMethod: string;
       shippingAddress: ShippingAddress;
       shippingMethod: string;
@@ -56,14 +59,18 @@ app.post("/add", async (c) => {
       );
     }
 
-    // Calculate totalAmount with typed parameters
+    // Calculate totalAmount
     const totalAmount =
-      products.reduce((total: number, product: Product) => {
-        return total + product.price * product.quantity;
-      }, 0) +
+      products.reduce(
+        (total: number, product: { quantity: number; price: number }) => {
+          return total + product.price * product.quantity;
+        },
+        0
+      ) +
       shippingCost -
       discount;
 
+    // Create and save the order
     const order = new Order({
       customerID,
       products,
@@ -74,13 +81,31 @@ app.post("/add", async (c) => {
       shippingCost,
       discount,
     });
-
-    // Save order to database
     await order.save();
+
+    // Update product sales
+    await Promise.all(
+      products.map(async (item) => {
+        const { productID, quantity, price } = item;
+
+        // Update the totalSale and totalSaleValue for each product
+        await Product.findByIdAndUpdate(
+          productID,
+          {
+            $inc: {
+              totalSale: quantity,
+              totalSaleValue: price * quantity,
+            },
+            $set: { dateModified: new Date() },
+          },
+          { new: true }
+        );
+      })
+    );
 
     return c.json({
       success: true,
-      message: "Order created successfully",
+      message: "Order created and products updated successfully",
       order,
     });
   } catch (error) {
@@ -109,7 +134,6 @@ app.post("/add", async (c) => {
 app.post("/pay", async (c) => {
   try {
     const { customerID, orderID }: PaymentRequest = await c.req.json();
-    console.log(orderID);
 
     // Validate required fields
     if (!customerID || !orderID) {
@@ -170,6 +194,72 @@ app.post("/pay", async (c) => {
       { success: false, message: "An unknown error occurred" },
       500
     );
+  }
+});
+
+app.get("/getByShopOrderStatus", async (c) => {
+  // Extract query parameters
+  const { shopName, orderStatus } = c.req.query as {
+    shopName?: string;
+    orderStatus?: string;
+  };
+
+  // Build the query
+  const query: any = {};
+
+  if (shopName) {
+    query["products.brand"] = shopName; // Check the brand in the products array
+  }
+
+  if (orderStatus) {
+    query.orderStatus = orderStatus; // Check the order status
+  }
+
+  try {
+    // Fetch orders based on the query
+    const orders = await Order.find(query);
+
+    // Return the orders
+    return c.json(orders);
+  } catch (error) {
+    console.error("Error fetching orders:", error);
+    return c.json({ error: "Failed to fetch orders" }, 500);
+  }
+});
+
+app.get("/by-brand", async (c) => {
+  const { brand } = c.req.query();
+
+  if (!brand) {
+    return c.json({ error: "Brand query parameter is required" }, 400);
+  }
+
+  try {
+    const orders = await Order.find({ "products.brand": brand }).exec();
+    return c.json(orders);
+  } catch (error) {
+    console.error("Error fetching orders:", error);
+    return c.json({ error: "Internal Server Error" }, 500);
+  }
+});
+
+app.get("/by-customer-id", async (c) => {
+  const { customerID } = c.req.query();
+
+  // Check if customerID is provided
+  if (!customerID) {
+    return c.json({ error: "customerID query parameter is required" }, 400);
+  }
+
+  try {
+    // Fetch orders where the customerID matches the provided value
+    const orders = await Order.find({ customerID: customerID }).exec();
+
+    // Return the fetched orders
+    return c.json(orders);
+  } catch (error) {
+    console.error("Error fetching orders:", error);
+    return c.json({ error: "Internal Server Error" }, 500);
   }
 });
 

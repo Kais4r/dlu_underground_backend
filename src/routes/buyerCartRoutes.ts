@@ -30,9 +30,11 @@ app.post("/add", async (c) => {
         ? product.price - product.price * (product.discount / 100)
         : product.price;
 
+    console.log(product.brand);
     const cartItem = {
       productID,
       name: product.name,
+      brand: product.brand,
       price,
       quantity,
       totalPrice: price * quantity,

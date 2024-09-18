@@ -7,6 +7,7 @@ const orderSchema = new Schema({
     {
       productID: { type: String, required: true }, // Reference to the Product schema
       name: { type: String, required: true }, // Store product name for convenience
+      brand: { type: String, required: true },
       quantity: { type: Number, required: true, default: 1 },
       price: { type: Number, required: true }, // Store the price at the time of purchase
     },

@@ -4,6 +4,7 @@ const { Schema } = mongoose;
 interface CartItem {
   productID: mongoose.Types.ObjectId;
   name: string;
+  brand: string;
   price: number;
   quantity: number;
   totalPrice: number;
@@ -14,6 +15,7 @@ const cartItemSchema = new Schema<CartItem>(
   {
     productID: { type: Schema.Types.ObjectId, ref: "Product", required: true },
     name: { type: String, required: true },
+    brand: { type: String, required: true },
     price: { type: Number, required: true },
     quantity: { type: Number, required: true, default: 1 },
     totalPrice: { type: Number, required: true }, // quantity * price

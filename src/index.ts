@@ -7,6 +7,7 @@ import userRoutes from "./routes/userRoutes";
 import productRoutes from "./routes/productRoutes";
 import orderRoutes from "./routes/orderRoutes";
 import buyerCardRoutes from "./routes/buyerCartRoutes";
+import shopRoutes from "./routes/shopRoutes";
 
 const app = new Hono();
 
@@ -43,6 +44,7 @@ app.route("/user", userRoutes);
 app.route("/product", productRoutes);
 app.route("/order", orderRoutes);
 app.route("/buyerCart", buyerCardRoutes);
+app.route("/shop", shopRoutes);
 
 export default {
   port: 3001,

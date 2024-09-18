@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import Product from "../models/product.model";
+import Shop from "../models/shop.model";
 
 const app = new Hono();
 
@@ -7,6 +8,7 @@ app.post("/add", async (c) => {
   try {
     // Parse JSON body from request
     const {
+      shopName, // Shop name used to identify the shop
       name,
       description,
       price,
@@ -30,6 +32,20 @@ app.post("/add", async (c) => {
       warranty,
       shippingDetails,
     } = await c.req.json();
+
+    // Find the shop by its name
+    console.log(shopName);
+    const shop = await Shop.findOne({ name: brand });
+
+    if (!shop) {
+      return c.json(
+        {
+          success: false,
+          message: "Shop not found",
+        },
+        404
+      );
+    }
 
     // Create a new product instance using the Mongoose model
     const product = new Product({
@@ -59,6 +75,12 @@ app.post("/add", async (c) => {
 
     // Save the product to the database
     await product.save();
+
+    // Add the product's ID to the shop's products array
+    shop.products.push(product._id);
+
+    // Save the updated shop document
+    await shop.save();
 
     return c.json({
       success: true,
@@ -139,4 +161,50 @@ app.get("/get/:id", async (c) => {
   }
 });
 
+app.get("/stocked-products-by-shop", async (c) => {
+  const brand = c.req.query("brand"); // Get the brand from query params
+
+  if (!brand) {
+    return c.json({ message: "Brand query parameter is required" }, 400);
+  }
+
+  try {
+    // Query to get products with stockQuantity > 0, status 'in stock', and the specified brand
+    const stockedProducts = await Product.find({
+      stockQuantity: { $gt: 0 },
+      status: "in stock",
+      brand: brand, // Add the brand filter
+    });
+
+    // Return the filtered products as JSON
+    return c.json(stockedProducts);
+  } catch (error) {
+    console.error("Error fetching stocked products:", error);
+    return c.json({ message: "Error fetching stocked products" }, 500);
+  }
+});
+
+app.get("/best-sellers-by-shop", async (c) => {
+  const queryParams = c.req.query();
+  const brand = queryParams.brand as string | undefined;
+
+  try {
+    // Construct the query object
+    const query: { brand?: string } = {};
+    if (brand) {
+      query.brand = brand; // Filter by brand if provided
+    }
+
+    // Query to get the top 20 products for the specified brand, sorted by totalSale in descending order
+    const bestSellers = await Product.find(query)
+      .sort({ totalSale: -1 })
+      .limit(20);
+
+    // Respond with the list of best-selling products
+    return c.json(bestSellers);
+  } catch (error) {
+    // Handle errors
+    return c.json({ message: "Internal server error", error }, 500);
+  }
+});
 export default app;

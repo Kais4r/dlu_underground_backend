@@ -32,7 +32,7 @@ app.notFound((c) => {
 
 app.onError((err, c) => {
   console.error(`${err}`);
-  return c.text("Nuh uh error code 500", 500);
+  return c.text("Nuh uh error code 500" + err, 500);
 });
 
 app.get("/", (c) => {

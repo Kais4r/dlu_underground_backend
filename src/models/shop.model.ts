@@ -1,11 +1,15 @@
 import mongoose from "mongoose";
 const { Schema } = mongoose;
 
-const customerSchema = new Schema({
+const customerSchema = new mongoose.Schema({
   customerID: {
-    type: Schema.Types.ObjectId,
-    ref: "User", // Referencing the User schema
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
     required: true,
+  },
+  name: {
+    type: String,
+    required: true, // Ensure name is required here
   },
   ordersCount: {
     type: Number,

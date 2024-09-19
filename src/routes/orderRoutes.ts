@@ -36,6 +36,7 @@ app.post("/add", async (c) => {
   try {
     const {
       customerID,
+      customerName, // New field for customer's name
       products,
       paymentMethod,
       shippingAddress,
@@ -44,6 +45,7 @@ app.post("/add", async (c) => {
       discount,
     }: {
       customerID: string;
+      customerName: string; // Define the new customer's name
       products: {
         productID: string;
         name: string;
@@ -68,7 +70,13 @@ app.post("/add", async (c) => {
     } = await c.req.json();
 
     // Validate required fields
-    if (!customerID || !products || !paymentMethod || !shippingAddress) {
+    if (
+      !customerID ||
+      !customerName ||
+      !products ||
+      !paymentMethod ||
+      !shippingAddress
+    ) {
       return c.json(
         { success: false, message: "Missing required fields" },
         400
@@ -83,6 +91,7 @@ app.post("/add", async (c) => {
       name: p.name,
       brand: p.brand,
     }));
+
     const shops = await Shop.find({});
 
     for (const shop of shops) {
@@ -105,9 +114,10 @@ app.post("/add", async (c) => {
         );
 
         if (!existingCustomer) {
-          // Add new customer with ordersCount = 1
+          // Add new customer with ordersCount = 1 and set name
           shop.customers.push({
             customerID: customerObjectId,
+            name: customerName, // Add customer name
             ordersCount: 1,
           });
         } else {

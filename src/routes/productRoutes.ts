@@ -101,6 +101,24 @@ app.post("/add", async (c) => {
   }
 });
 
+app.get("/all", async (c) => {
+  try {
+    const products = await Product.find();
+    return c.json({ success: true, products });
+  } catch (error) {
+    console.error(error);
+    const err = error as Error;
+    return c.json(
+      {
+        success: false,
+        message: "Failed to fetch products",
+        error: err.message,
+      },
+      500
+    );
+  }
+});
+
 app.get("/on-sale", async (c) => {
   try {
     // Query for products with a discount greater than 0

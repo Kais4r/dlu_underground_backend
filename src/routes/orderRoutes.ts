@@ -3,6 +3,7 @@ import Order from "../models/order.model"; // Assuming your order schema is in t
 import User from "../models/user.model";
 import Shop from "../models/shop.model";
 import Product from "../models/product.model"; // Update the path as necessary
+import mongoose from "mongoose";
 
 const app = new Hono();
 
@@ -43,9 +44,24 @@ app.post("/add", async (c) => {
       discount,
     }: {
       customerID: string;
-      products: { productID: string; quantity: number; price: number }[];
+      products: {
+        productID: string;
+        name: string;
+        brand: string;
+        quantity: number;
+        price: number;
+      }[];
       paymentMethod: string;
-      shippingAddress: ShippingAddress;
+      shippingAddress: {
+        fullName: string;
+        addressLine1: string;
+        addressLine2?: string;
+        city: string;
+        state: string;
+        postalCode: string;
+        country: string;
+        phoneNumber: string;
+      };
       shippingMethod: string;
       shippingCost: number;
       discount: number;
@@ -59,12 +75,65 @@ app.post("/add", async (c) => {
       );
     }
 
+    // Convert customerID to ObjectId
+    const customerObjectId = new mongoose.Types.ObjectId(customerID);
+
+    // Check if the customer has bought products from the shop before
+    const productNamesAndBrands = products.map((p) => ({
+      name: p.name,
+      brand: p.brand,
+    }));
+    const shops = await Shop.find({});
+
+    for (const shop of shops) {
+      const hasBoughtFromShop = await Order.findOne({
+        customerID: customerObjectId,
+        products: {
+          $elemMatch: {
+            $or: productNamesAndBrands.map((p) => ({
+              name: p.name,
+              brand: p.brand,
+            })),
+          },
+        },
+      });
+
+      if (!hasBoughtFromShop) {
+        // Add or update customer in the shop's customer list
+        const existingCustomer = shop.customers.find(
+          (customer) => customer.customerID.toString() === customerID
+        );
+
+        if (!existingCustomer) {
+          // Add new customer with ordersCount = 1
+          shop.customers.push({
+            customerID: customerObjectId,
+            ordersCount: 1,
+          });
+        } else {
+          // Increment ordersCount for existing customer
+          existingCustomer.ordersCount += 1;
+        }
+      } else {
+        // Increment ordersCount for existing customer
+        const existingCustomer = shop.customers.find(
+          (customer) => customer.customerID.toString() === customerID
+        );
+
+        if (existingCustomer) {
+          existingCustomer.ordersCount += 1;
+        }
+      }
+
+      // Save the updated shop document
+      await shop.save();
+    }
+
     // Calculate totalAmount
     const totalAmount =
       products.reduce(
-        (total: number, product: { quantity: number; price: number }) => {
-          return total + product.price * product.quantity;
-        },
+        (total: number, product: { quantity: number; price: number }) =>
+          total + product.price * product.quantity,
         0
       ) +
       shippingCost -
@@ -72,7 +141,7 @@ app.post("/add", async (c) => {
 
     // Create and save the order
     const order = new Order({
-      customerID,
+      customerID: customerObjectId,
       products,
       totalAmount,
       paymentMethod,
@@ -88,7 +157,6 @@ app.post("/add", async (c) => {
       products.map(async (item) => {
         const { productID, quantity, price } = item;
 
-        // Update the totalSale and totalSaleValue for each product
         await Product.findByIdAndUpdate(
           productID,
           {
@@ -105,7 +173,8 @@ app.post("/add", async (c) => {
 
     return c.json({
       success: true,
-      message: "Order created and products updated successfully",
+      message:
+        "Order created, products updated, and customer list updated successfully",
       order,
     });
   } catch (error) {

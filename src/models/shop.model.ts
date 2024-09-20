@@ -53,6 +53,14 @@ const shopSchema = new Schema({
     },
   ],
   customers: [customerSchema], // Embedding the customerSchema
+  platformDiscount: {
+    type: Number,
+    default: 0, // Default value for platformDiscount
+  },
+  platformShippingDiscount: {
+    type: Number,
+    default: 0, // Default value for platformShippingDiscount
+  },
   createdAt: {
     type: Date,
     default: Date.now,

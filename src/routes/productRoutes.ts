@@ -8,10 +8,10 @@ app.post("/add", async (c) => {
   try {
     // Parse JSON body from request
     const {
-      shopName, // Shop name used to identify the shop
       name,
       description,
       price,
+      shippingCost, // Include shippingCost
       category,
       brand,
       sku,
@@ -30,12 +30,12 @@ app.post("/add", async (c) => {
       tags,
       supplierID,
       warranty,
-      shippingDetails,
+      shippingDetails, // Keep shippingDetails as a string
     } = await c.req.json();
 
     // Find the shop by its name
-    console.log(shopName);
-    const shop = await Shop.findOne({ name: brand });
+    console.log(brand);
+    const shop = await Shop.findOne({ name: brand }); // Changed from brand to shopName
 
     if (!shop) {
       return c.json(
@@ -52,6 +52,7 @@ app.post("/add", async (c) => {
       name,
       description,
       price,
+      shippingCost, // Include shippingCost in the product creation
       category,
       brand,
       sku,
@@ -70,7 +71,7 @@ app.post("/add", async (c) => {
       tags,
       supplierID,
       warranty,
-      shippingDetails,
+      shippingDetails, // Ensure shippingDetails is included
     });
 
     // Save the product to the database

@@ -7,6 +7,7 @@ const productSchema = new Schema({
   totalSaleValue: { type: Number, default: 0 },
   description: { type: String, required: true },
   price: { type: Number, required: true },
+  shippingCost: { type: Number, required: true },
   category: { type: String, required: true, default: "Miscellaneous" },
   brand: { type: String, required: true, default: "Generic" },
   sku: { type: String, required: true },

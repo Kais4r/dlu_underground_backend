@@ -151,4 +151,53 @@ app.get("/items", async (c) => {
   }
 });
 
+app.get("/items/count", async (c) => {
+  try {
+    const { userID } = c.req.query();
+
+    if (!userID) {
+      return c.json({ success: false, message: "User ID is required" }, 400);
+    }
+
+    // Find the cart for the user
+    const cart = await Cart.findOne({ userID }).exec();
+
+    if (!cart) {
+      return c.json({ success: false, message: "Cart not found" }, 404);
+    }
+
+    // Calculate the count of items in the cart
+    const itemCount = cart.items.length;
+
+    return c.json({
+      success: true,
+      itemCount: itemCount,
+    });
+  } catch (error) {
+    console.error(error);
+
+    // Type guard to check if the error is an instance of Error
+    if (error instanceof Error) {
+      return c.json(
+        {
+          success: false,
+          message: "Failed to retrieve cart item count",
+          error: error.message,
+        },
+        500
+      );
+    } else {
+      // Handle unexpected error types
+      return c.json(
+        {
+          success: false,
+          message: "An unexpected error occurred",
+          error: "Unknown error",
+        },
+        500
+      );
+    }
+  }
+});
+
 export default app;

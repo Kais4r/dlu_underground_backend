@@ -121,13 +121,26 @@ app.delete("/delete/:id", async (c) => {
 
 app.put("/edit/:id", async (c) => {
   const shopId = c.req.param("id");
-  const { name, description, location } = await c.req.json();
+  const {
+    name,
+    description,
+    location,
+    platformDiscount,
+    platformShippingDiscount,
+  } = await c.req.json();
 
   try {
     const updatedShop = await Shop.findByIdAndUpdate(
       shopId,
-      { name, description, location, updatedAt: Date.now() },
-      { new: true }
+      {
+        name,
+        description,
+        location,
+        ...(platformDiscount != null && { platformDiscount }), // Update if provided
+        ...(platformShippingDiscount != null && { platformShippingDiscount }), // Update if provided
+        updatedAt: Date.now(),
+      },
+      { new: true } // Return the updated document
     );
 
     if (!updatedShop) {

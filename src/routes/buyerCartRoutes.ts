@@ -1,6 +1,12 @@
 import { Hono } from "hono";
 import Cart from "../models/buyerCart.model"; // Path to your Cart model
 import Product from "../models/product.model";
+import mongoose from "mongoose";
+
+interface RemoveItemRequest {
+  userID: string;
+  productID: string;
+}
 
 const app = new Hono();
 
@@ -197,6 +203,37 @@ app.get("/items/count", async (c) => {
         500
       );
     }
+  }
+});
+
+// DELETE endpoint to remove an item from the cart
+app.delete("/delete/:userID/item/:productID", async (c) => {
+  const { userID, productID } = c.req.param();
+
+  try {
+    // Find the cart for the user
+    const cart = await Cart.findOne({ userID });
+
+    if (!cart) {
+      c.status(404);
+      return c.json({ message: "Cart not found" });
+    }
+
+    // Remove the item from the cart
+    cart.items = cart.items.filter(
+      (item) => item.productID.toString() !== productID
+    );
+
+    // Save the updated cart
+    await cart.save();
+
+    return c.json({ message: "Item removed from cart", cart });
+  } catch (error) {
+    console.error(error);
+    c.status(500);
+    return c.json({
+      message: "An error occurred while deleting the item from the cart",
+    });
   }
 });
 

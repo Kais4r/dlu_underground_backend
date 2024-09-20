@@ -1,5 +1,13 @@
 import { Hono } from "hono";
 import User from "../models/user.model";
+import Shop from "../models/shop.model";
+import Product from "../models/shop.model";
+
+interface EditUserRequest {
+  password?: string; // Optional, since you may not want to update the password every time
+  role?: string; // Optional
+}
+
 var jwt = require("jsonwebtoken");
 
 const app = new Hono();
@@ -114,6 +122,59 @@ app.get("/get/:id", async (c) => {
 
     return c.json(
       { success: false, message: "An unknown error occurred" },
+      500
+    );
+  }
+});
+
+app.get("/get-all", async (c) => {
+  try {
+    const users = await User.find({});
+    return c.json(users);
+  } catch (error) {
+    console.error("Error fetching users:", error);
+    return c.json({ error: "Failed to fetch users" }, 500);
+  }
+});
+
+app.delete("/delete/:id", async (c) => {
+  const userId = c.req.param("id");
+
+  try {
+    const deletedUser = await User.findByIdAndDelete(userId);
+    if (!deletedUser) {
+      return c.json({ error: "User not found" }, 404);
+    }
+    return c.json({ message: "User deleted successfully" }, 200);
+  } catch (error) {
+    console.error("Error deleting user:", error);
+    return c.json({ error: "An error occurred while deleting the user." }, 500);
+  }
+});
+
+app.patch("/edit/:id", async (c) => {
+  const userId = c.req.param("id");
+  const body: EditUserRequest = await c.req.json();
+
+  try {
+    const updateData: Partial<EditUserRequest> = {};
+    if (body.password) updateData.password = body.password; // Allow updating password
+    if (body.role) updateData.role = body.role; // Allow updating role
+
+    const updatedUser = await User.findByIdAndUpdate(userId, updateData, {
+      new: true,
+      runValidators: true,
+    });
+
+    if (!updatedUser) {
+      return c.json({ error: "User not found" }, 404);
+    }
+
+    return c.json({ message: "User updated successfully", user: updatedUser });
+  } catch (error: any) {
+    // Using 'any' type here
+    return c.json(
+      { error: "Error updating user", details: error.message },
       500
     );
   }

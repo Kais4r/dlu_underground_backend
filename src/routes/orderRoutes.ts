@@ -36,7 +36,7 @@ app.post("/add", async (c) => {
   try {
     const {
       customerID,
-      customerName, // New field for customer's name
+      customerName,
       products,
       paymentMethod,
       shippingAddress,
@@ -45,7 +45,7 @@ app.post("/add", async (c) => {
       discount,
     }: {
       customerID: string;
-      customerName: string; // Define the new customer's name
+      customerName: string;
       products: {
         productID: string;
         name: string;
@@ -117,7 +117,7 @@ app.post("/add", async (c) => {
           // Add new customer with ordersCount = 1 and set name
           shop.customers.push({
             customerID: customerObjectId,
-            name: customerName, // Add customer name
+            name: customerName,
             ordersCount: 1,
           });
         } else {
@@ -139,15 +139,29 @@ app.post("/add", async (c) => {
       await shop.save();
     }
 
+    // Get platform discounts
+    const platformDiscounts = await Promise.all(
+      shops.map(async (shop) => ({
+        discount: shop.platformDiscount,
+        shippingDiscount: shop.platformShippingDiscount,
+      }))
+    );
+
     // Calculate totalAmount
-    const totalAmount =
+    const baseTotalAmount =
       products.reduce(
         (total: number, product: { quantity: number; price: number }) =>
           total + product.price * product.quantity,
         0
-      ) +
-      shippingCost -
-      discount;
+      ) + shippingCost;
+
+    const totalDiscount = platformDiscounts.reduce(
+      (acc, { discount, shippingDiscount }) =>
+        acc + discount + shippingDiscount,
+      discount
+    );
+
+    const totalAmount = baseTotalAmount - totalDiscount;
 
     // Create and save the order
     const order = new Order({
@@ -158,7 +172,7 @@ app.post("/add", async (c) => {
       shippingAddress,
       shippingMethod,
       shippingCost,
-      discount,
+      discount: totalDiscount,
     });
     await order.save();
 
@@ -190,7 +204,6 @@ app.post("/add", async (c) => {
   } catch (error) {
     console.error(error);
 
-    // Type guard or casting error to Error
     if (error instanceof Error) {
       return c.json(
         {
@@ -202,7 +215,6 @@ app.post("/add", async (c) => {
       );
     }
 
-    // Handle unknown error types
     return c.json(
       { success: false, message: "An unknown error occurred" },
       500

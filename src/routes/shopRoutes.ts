@@ -1,7 +1,7 @@
 import { Hono } from "hono";
-import Shop from "../models/shop.model"; // Assuming you have the Shop model defined
-import User from "../models/user.model"; // Assuming User model is already imported
-//import Order from "../models/order.model";
+import Shop from "../models/shop.model";
+import User from "../models/user.model";
+import Product from "../models/product.model";
 
 const app = new Hono();
 
@@ -33,9 +33,7 @@ app.post("/create", async (c) => {
     const { userId, name, description, location } = await c.req.json();
 
     console.log(userId);
-    console.log(name);
-    console.log(description);
-    console.log(location);
+
     // Check if the user already has a shop
     const existingShop = await Shop.findOne({ owner: userId });
     if (existingShop) {
@@ -75,6 +73,70 @@ app.post("/regular-customers", async (c) => {
   } catch (error) {
     console.error(error);
     return c.json({ error: "An error occurred" }, 500);
+  }
+});
+
+app.get("/get-all", async (c) => {
+  try {
+    const shops = await Shop.find()
+      .populate("owner", "name") // Populate owner name from the User model
+      .populate("products", "name price") // Populate product details (name, price)
+      .populate("customers.customerID", "name"); // Populate customer name from the User model
+
+    return c.json(shops, 200); // Return all shops
+  } catch (err) {
+    if (err instanceof Error) {
+      return c.json(
+        { error: "Failed to fetch shops", message: err.message },
+        500
+      );
+    }
+    return c.json({ error: "An unknown error occurred" }, 500);
+  }
+});
+
+app.delete("/delete/:id", async (c) => {
+  const shopId = c.req.param("id");
+
+  try {
+    // Find the shop and populate its products
+    const shop = await Shop.findById(shopId).populate("products");
+
+    if (!shop) {
+      return c.json({ error: "Shop not found" }, 404);
+    }
+
+    // Delete associated products
+    await Product.deleteMany({ _id: { $in: shop.products } });
+
+    // Delete the shop
+    await Shop.findByIdAndDelete(shopId);
+
+    return c.json({ message: "Shop and its products deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting shop:", error);
+    return c.json({ error: "An error occurred while deleting the shop" }, 500);
+  }
+});
+
+app.put("/edit/:id", async (c) => {
+  const shopId = c.req.param("id");
+  const { name, description, location } = await c.req.json();
+
+  try {
+    const updatedShop = await Shop.findByIdAndUpdate(
+      shopId,
+      { name, description, location, updatedAt: Date.now() },
+      { new: true }
+    );
+
+    if (!updatedShop) {
+      return c.json({ error: "Shop not found" }, 404);
+    }
+
+    return c.json({ shop: updatedShop, message: "Shop updated successfully" });
+  } catch (error) {
+    return c.json({ error: "Failed to update the shop" }, 500);
   }
 });
 

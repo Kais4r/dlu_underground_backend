@@ -207,4 +207,38 @@ app.get("/best-sellers-by-shop", async (c) => {
     return c.json({ message: "Internal server error", error }, 500);
   }
 });
+
+app.get("/platform/all", async (c) => {
+  try {
+    const products = await Product.find(); // Fetch all products from the database
+
+    // Calculate platform totals
+    const platformTotalSale = products.reduce(
+      (acc, product) => acc + product.totalSale,
+      0
+    );
+    const platformTotalSaleValue = products.reduce(
+      (acc, product) => acc + product.totalSaleValue,
+      0
+    );
+
+    return c.json(
+      {
+        products,
+        platformTotalSale,
+        platformTotalSaleValue,
+      },
+      200
+    ); // Respond with products and platform-wide totals
+  } catch (err) {
+    if (err instanceof Error) {
+      return c.json(
+        { error: "Failed to fetch products", message: err.message },
+        500
+      );
+    }
+    return c.json({ error: "An unknown error occurred" }, 500);
+  }
+});
+
 export default app;

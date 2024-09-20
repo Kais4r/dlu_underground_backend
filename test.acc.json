@@ -1,0 +1,46 @@
+[
+  {
+    "_id": {
+      "$oid": "66e3de8097d919a122b1d645"
+    },
+    "email": "user1@dlu.edu.vn",
+    "name": "user1",
+    "password": "test",
+    "role": "user",
+    "__v": 0,
+    "dluCoin": 29279928
+  },
+  {
+    "_id": {
+      "$oid": "66ea9fe8a0bd7f97acc92dcb"
+    },
+    "email": "khoi@dlu.edu.vn",
+    "name": "khoi",
+    "password": "test",
+    "role": "user",
+    "__v": 0,
+    "dluCoin": 999991
+  },
+  {
+    "_id": {
+      "$oid": "66eade57a0bd7f97acc92e1b"
+    },
+    "email": "hieu@dlu.edu.vn",
+    "name": "hieu",
+    "password": "test",
+    "role": "user",
+    "__v": 0,
+    "dluCoin": 999996
+  },
+  {
+    "_id": {
+      "$oid": "66eade73a0bd7f97acc92e1c"
+    },
+    "email": "nhu@dlu.edu.vn",
+    "name": "nhu",
+    "password": "test",
+    "role": "user",
+    "__v": 0,
+    "dluCoin": 999939
+  }
+]

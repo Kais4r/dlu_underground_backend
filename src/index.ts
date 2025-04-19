@@ -15,7 +15,7 @@ const app = new Hono();
 app.use(cors());
 
 const mongoURI =
-  "mongodb+srv://quynhnhu:N94NBjKS60nRuGjt@dluundergroundcluster.obcrv.mongodb.net/?retryWrites=true&w=majority&appName=DLUUndergroundCluster";
+  "";
 
 mongoose
   .connect(mongoURI)
